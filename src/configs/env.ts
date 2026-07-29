@@ -27,6 +27,18 @@ const envSchema = z.object({
 
   // Database
   DATABASE_URL: z.coerce.string().startsWith("mongodb+srv://"),
+
+  // CORS
+  CORS_ORIGIN: z
+    .string()
+    .or(z.array(z.string()))
+    .transform((val) => {
+      if (typeof val === "string") {
+        return val.split(",").map((origin) => origin.trim());
+      }
+      return val;
+    })
+    .default([]),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,6 +1,9 @@
-import env from "./env.ts";
+import { connectDB } from "./configs/db.ts";
+import env from "./configs/env.ts";
 import app from "./server.ts";
 
-app.listen(env.PORT, () => {
-  console.log(`Server is running on http://localhost:${3000}`);
+connectDB().then(() => {
+  app.listen(env.PORT, () => {
+    console.log(`Server is running on http://localhost:${3000}`);
+  });
 });
