@@ -1,6 +1,6 @@
 import z from "zod";
 
-const CreateUserSchema = z.object({
+export const createUserSchema = z.object({
   username: z
     .string()
     .trim()
@@ -8,7 +8,7 @@ const CreateUserSchema = z.object({
     .min(1, "Username is required")
     .max(50, "Username is too long"),
   email: z
-    .string()
+    .email()
     .trim()
     .lowercase()
     .min(1, "Email is required")
@@ -31,4 +31,19 @@ const CreateUserSchema = z.object({
   phone: z.string().max(20, "Phone is too long").optional(),
 });
 
-export type CreateUserType = z.infer<typeof CreateUserSchema>;
+// SignIn schema ( username/email + password )
+export const signInSchema = z.object({
+  indentifier: z
+    .string()
+    .trim()
+    .lowercase()
+    .min(1, "Indentifier is required")
+    .max(50, "Indentifier is too long"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .max(50, "Password is too long"),
+});
+
+export type CreateUserType = z.infer<typeof createUserSchema>;
+export type SignInType = z.infer<typeof signInSchema>;

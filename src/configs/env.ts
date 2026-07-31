@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import ms, { type StringValue } from "ms";
 import path from "node:path";
 import { z } from "zod";
 
@@ -39,6 +40,44 @@ const envSchema = z.object({
       return val;
     })
     .default([]),
+
+  // JWT & Auth
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
+  JWT_EXPIRES_IN: z
+    .string()
+    .default("7d")
+    .transform((val, ctx) => {
+      const milliseconds = ms(val as StringValue);
+
+      if (milliseconds === undefined || isNaN(milliseconds)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid time format ( example: '1h', '2d' )",
+        });
+        return z.NEVER;
+      }
+
+      return milliseconds / 1000;
+    }),
+  REFRESH_TOKEN_EXPIRES_IN: z
+    .string()
+    .default("30d")
+    .transform((val, ctx) => {
+      const milliseconds = ms(val as StringValue);
+
+      if (milliseconds === undefined || isNaN(milliseconds)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Invalid time format ( example: '1h', '2d' )",
+        });
+        return z.NEVER;
+      }
+
+      return milliseconds / 1000;
+    }),
+
+  // Security
+  BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
 });
 
 export type Env = z.infer<typeof envSchema>;

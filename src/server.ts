@@ -4,6 +4,11 @@ import env, { isTest } from "./configs/env.ts";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { errorHandler } from "./middlewares/errorHandler.ts";
+import { notFoundHandler } from "./middlewares/notFoundHandler.ts";
+import authRoutes from "./routes/authRoutes.ts";
+import userRoutes from "./routes/userRoutes.ts";
+import { authenticationToken } from "./middlewares/auth.ts";
 
 const app = express();
 
@@ -17,6 +22,23 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running ..." });
 });
+
+// Public routes
+app.use("/api/auth", authRoutes);
+
+// Authentication middleware for private routes
+app.use(authenticationToken);
+
+// Private routes
+app.use("/api/users", userRoutes);
+
+app.get("/api/private", (req, res) => {
+  res.status(200).json({ message: "Private Routes" });
+});
+
+// Error handling middlewares
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export { app };
 export default app;
