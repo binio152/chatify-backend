@@ -1,5 +1,4 @@
-import type { HydratedDocument } from "mongoose";
-import { Schema, model, type InferRawDocType } from "mongoose";
+import { Schema, model } from "mongoose";
 
 const friendRequestSchema = new Schema(
   {

@@ -10,7 +10,7 @@ const groupSchema = new Schema(
 
 const lastMessageSchema = new Schema(
   {
-    _id: { type: String },
+    _id: { type: Schema.Types.ObjectId, ref: "Message" },
     content: { type: String, default: null },
     senderId: { type: Schema.Types.ObjectId, ref: "User" },
     createdAt: { type: Date, default: null },
@@ -27,8 +27,9 @@ const conversationSchema = new Schema(
       default: "direct",
     },
     group: { type: groupSchema },
-    lassMessage: { type: lastMessageSchema, default: null },
-    lastMessageAt: { type: Date },
+    lastMessage: { type: lastMessageSchema, default: null },
+    lastMessageAt: { type: Date, default: null },
+    preview: { type: String, default: null },
   },
   { timestamps: true },
 );
