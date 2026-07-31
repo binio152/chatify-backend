@@ -67,8 +67,6 @@ export const signin = async (
     if (!user)
       return next(new AppError("Incorrect username/email or password.", 401));
 
-    const { password: userPassword, ...userWithoutPassword } = user;
-
     const isPasswordMatch = await comparePassword(password, user.password);
     if (!isPasswordMatch)
       return next(new AppError("Incorrect username/email or password.", 401));
@@ -141,13 +139,11 @@ export const refreshToken = async (
       { issuer: "chatify" },
     );
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Refreshed token successfully",
-        accessToken,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Refreshed token successfully",
+      accessToken,
+    });
   } catch (err) {
     console.log("Error occurred while refreshing token.", err);
     next(err);
