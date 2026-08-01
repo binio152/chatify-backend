@@ -9,14 +9,18 @@ const friendSchema = new Schema(
 );
 
 friendSchema.pre("validate", function () {
+  if (!this.userA || !this.userB) return;
+
+  if (this.userA.equals(this.userB)) {
+    this.invalidate("userB", "A user cannot be friends with themselves");
+  }
+});
+
+friendSchema.pre("save", function () {
   const a = this.userA.toString();
   const b = this.userB.toString();
 
   if (a > b) [this.userA, this.userB] = [this.userB, this.userA];
-
-  if (this.userA.equals(this.userB)) {
-    this.invalidate("userB", "Users cannot be friends with themselves");
-  }
 });
 
 friendSchema.index({ userA: 1, userB: 1 }, { unique: true });

@@ -1,10 +1,12 @@
-import mongoose from "mongoose";
+import mongoose, {
+  type StringExpressionOperatorReturningArray,
+} from "mongoose";
 import { Friend } from "../models/Friend.ts";
 import { FriendRequest } from "../models/FriendRequest.ts";
 import { userSelectFields } from "../constants/index.ts";
 
 export const friendServices = {
-  acceptFriendRequest: async (
+  acceptFriendRequestAndCreateFriendship: async (
     from: string,
     to: string,
     reverseRequestId: string,
@@ -34,13 +36,13 @@ export const friendServices = {
     }
   },
 
+  pairUsers: (userA: string, userB: string): [string, string] =>
+    userA.toString() < userB.toString() ? [userA, userB] : [userB, userA],
+
   checkFriendshipStatus: async (userIdA: string, userIdB: string) => {
-    const isFriend = await Friend.findOne({
-      $or: [
-        { userA: userIdA, userB: userIdB },
-        { userA: userIdB, userB: userIdA },
-      ],
-    });
+    const [userA, userB] = friendServices.pairUsers(userIdA, userIdB);
+    console.log({ userA, userB });
+    const isFriend = await Friend.findOne({ userA, userB }).lean();
     return isFriend ? true : false;
   },
 
