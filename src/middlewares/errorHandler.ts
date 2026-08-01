@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError.ts";
+import multer from "multer";
 
 export const errorHandler = (
   err: Error,
@@ -13,6 +14,11 @@ export const errorHandler = (
     return res
       .status(err.statusCode)
       .json({ success: false, message: err.message });
+  }
+
+  if (err instanceof multer.MulterError) {
+    console.log("Multer error:", err); // DEV ONLY
+    return res.status(400).json({ success: false, message: err.message });
   }
 
   return res

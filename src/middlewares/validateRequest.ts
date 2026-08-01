@@ -3,7 +3,7 @@ import { ZodType } from "zod";
 
 interface ValidateProps {
   schema: ZodType<any>;
-  type: "body" | "query" | "params";
+  type: "body" | "query" | "params" | "file";
 }
 
 export const validateRequest = ({ type, schema }: ValidateProps) => {
