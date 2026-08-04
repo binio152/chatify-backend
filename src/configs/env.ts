@@ -78,6 +78,11 @@ const envSchema = z.object({
 
   // Security
   BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
+  CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
+  CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -85,7 +90,6 @@ let env: Env;
 
 try {
   env = envSchema.parse(process.env);
-  console.log(env);
 } catch (err) {
   if (err instanceof z.ZodError) {
     console.log("Invalid env variables");

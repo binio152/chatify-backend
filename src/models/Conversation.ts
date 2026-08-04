@@ -1,3 +1,4 @@
+import type { InferSchemaType, HydratedDocument } from "mongoose";
 import { Schema, model } from "mongoose";
 
 const groupSchema = new Schema(
@@ -37,3 +38,7 @@ const conversationSchema = new Schema(
 conversationSchema.index({ lastMessageAt: -1 });
 
 export const Conversation = model("Conversation", conversationSchema);
+
+export type ConversationDocument = HydratedDocument<
+  InferSchemaType<typeof conversationSchema>
+>;

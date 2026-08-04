@@ -8,7 +8,6 @@ import type {
 import { FriendRequest } from "../models/FriendRequest.ts";
 import { friendServices } from "../services/friendServices.ts";
 import { User } from "../models/User.ts";
-import { userSelectFields } from "../constants/index.ts";
 
 export const sendFriendRequest = async (
   req: Request<ParamsDictionary, any, SendFriendRequestType>,
@@ -17,19 +16,14 @@ export const sendFriendRequest = async (
 ) => {
   try {
     const from = req.user!.userId; // The userId passed in the authentication token
-    const { to, message = null } = req.body;
-
-    // Validate the request data
-    if (!from || !to) return next(new AppError("Invalid request data.", 401));
+    const { to, message = null } = req.body; // The userId (to) passed in the request body
 
     if (from.toString() === to.toString())
       return next(new AppError("You can't send a request to yourself.", 401));
 
-    // Check if the users are already friends
     const isFriend = await friendServices.checkFriendshipStatus(from, to);
     if (isFriend) return next(new AppError("You are already friends.", 401));
 
-    // Check if a friend request already exists
     const existingRequest = await FriendRequest.findOne({ from, to });
     if (existingRequest)
       return next(new AppError("You have already sent this request.", 401));
@@ -37,7 +31,7 @@ export const sendFriendRequest = async (
     // If a reverse request exists, accept it automatically
     const reverseRequest = await FriendRequest.findOne({ from: to, to: from });
     if (reverseRequest) {
-      await friendServices.acceptFriendRequest(
+      await friendServices.acceptFriendRequestAndCreateFriendship(
         from,
         to,
         reverseRequest._id.toString(),
@@ -46,18 +40,16 @@ export const sendFriendRequest = async (
       return res.status(201).json({
         success: true,
         message:
-          "You have received a friend request from this user. \
-           The request has been automatically accepted.",
+          "You have received a friend request from this user. The request has been automatically accepted.",
       });
     }
 
-    // Create a new friend request
-    const request = await FriendRequest.create({ from, to, message });
+    const friendRequest = await FriendRequest.create({ from, to, message });
 
     return res.status(201).json({
       success: true,
       message: "Friend request sent successfully.",
-      request,
+      friendRequest,
     });
   } catch (err) {
     console.log("Error occurred while sending friend request.", err);
@@ -74,7 +66,6 @@ export const acceptFriendRequest = async (
     const { requestId } = req.params;
     const userId = req.user!.userId; // The userId passed in the authentication token
 
-    // Check if the friend request exists and belongs to the authenticated user
     const request = await FriendRequest.findById(requestId);
     if (!request) return next(new AppError("Friend request not found.", 401));
 
@@ -83,13 +74,12 @@ export const acceptFriendRequest = async (
 
     // Fetch the user who sent the friend request
     const from = await User.findById(request.from)
-      .select(userSelectFields)
+      .select("_id username email firstName lastName avatarUrl")
       .lean();
     if (!from)
       return next(new AppError("You cannot accept this friend request.", 403));
 
-    // Accept the friend request and create a new friend relationship
-    const [friend, friendRequest] = await friendServices.acceptFriendRequest(
+    await friendServices.acceptFriendRequestAndCreateFriendship(
       request.from.toString(),
       request.to.toString(),
       requestId,
@@ -104,8 +94,6 @@ export const acceptFriendRequest = async (
         lastName: from.lastName,
         avatarUrl: from.avatarUrl,
       },
-      friend,
-      friendRequest,
     });
   } catch (err) {
     console.log("Error occurred while accepting friend request.", err);

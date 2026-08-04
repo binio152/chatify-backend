@@ -1,9 +1,6 @@
-import mongoose, {
-  type StringExpressionOperatorReturningArray,
-} from "mongoose";
+import mongoose from "mongoose";
 import { Friend } from "../models/Friend.ts";
 import { FriendRequest } from "../models/FriendRequest.ts";
-import { userSelectFields } from "../constants/index.ts";
 
 export const friendServices = {
   acceptFriendRequestAndCreateFriendship: async (
@@ -51,8 +48,8 @@ export const friendServices = {
     const friendships = await Friend.find({
       $or: [{ userA: userId }, { userB: userId }],
     })
-      .populate("userA", userSelectFields)
-      .populate("userB", userSelectFields)
+      .populate("userA", "_id username email firstName lastName avatarUrl")
+      .populate("userB", "_id username email firstName lastName avatarUrl")
       .lean();
 
     // If no friendships are found, return an empty array
@@ -71,10 +68,10 @@ export const friendServices = {
   getFriendRequestLists: async (userId: string) => {
     const [sentRequests, receivedRequests] = await Promise.all([
       FriendRequest.find({ from: userId })
-        .populate("to", userSelectFields)
+        .populate("to", "_id username email firstName lastName avatarUrl")
         .lean(),
       FriendRequest.find({ to: userId })
-        .populate("from", userSelectFields)
+        .populate("from", "_id username email firstName lastName avatarUrl")
         .lean(),
     ]);
 

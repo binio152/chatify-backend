@@ -9,6 +9,7 @@ import { notFoundHandler } from "./middlewares/notFoundHandler.ts";
 import authRoutes from "./routes/authRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
 import friendRoutes from "./routes/friendRoutes.ts";
+import messageRouter from "./routes/messageRoutes.ts";
 import { authenticationToken } from "./middlewares/auth.ts";
 
 const app = express();
@@ -33,6 +34,7 @@ app.use(authenticationToken);
 // Private routes
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
+app.use("/api/messages", messageRouter);
 
 // Error handling middlewares
 app.use(notFoundHandler);

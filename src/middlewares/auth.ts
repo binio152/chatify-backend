@@ -20,7 +20,7 @@ export const authenticationToken = async (
 
     next();
   } catch (err) {
-    console.log("Error occured while validation authentication token", err);
+    console.log("Error occurred while validation authentication token", err);
     next(new AppError("Invalid or expired access token.", 401));
   }
 };

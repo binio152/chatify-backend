@@ -1,3 +1,4 @@
+import type { HydratedDocument, InferSchemaType } from "mongoose";
 import { Schema, model } from "mongoose";
 
 const messageSchema = new Schema(
@@ -25,16 +26,8 @@ const messageSchema = new Schema(
 
 messageSchema.index({ conversationId: 1, createdAt: -1 });
 
-messageSchema.pre("validate", function () {
-  const hasContent = !!this.content?.trim();
-  const hasImage = !!this.imageUrl?.trim();
-
-  if (!hasContent && !hasImage) {
-    this.invalidate(
-      "content",
-      "Message must contain either text content or an image URL",
-    );
-  }
-});
-
 export const Message = model("Message", messageSchema);
+
+export type MessageDocument = HydratedDocument<
+  InferSchemaType<typeof messageSchema>
+>;
