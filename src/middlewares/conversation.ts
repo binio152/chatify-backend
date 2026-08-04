@@ -55,3 +55,43 @@ export const requireAllMembersAreFriends = async (
     next(err);
   }
 };
+
+export const validateConversationBody = (
+  req: Request<ParamsDictionary, any, CreateConversationType>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { type, name, memberIds } = req.body;
+    const userId = req.user!.userId;
+
+    if (type === "group" && (!name || name.trim() === ""))
+      return next(new AppError("Group conversations require a name.", 400));
+
+    if (!memberIds || !Array.isArray(memberIds) || memberIds.length === 0)
+      return next(
+        new AppError(
+          "Member IDs are required and must be a non-empty array.",
+          400,
+        ),
+      );
+
+    if (memberIds.includes(userId))
+      return next(
+        new AppError("You cannot add yourself to the conversation.", 400),
+      );
+
+    if (type === "direct" && memberIds.length !== 1)
+      return next(
+        new AppError(
+          "Direct conversations must have exactly one member ID.",
+          400,
+        ),
+      );
+
+    next();
+  } catch (err) {
+    console.log("Error occurred while validating conversation body", err);
+    next(err);
+  }
+};

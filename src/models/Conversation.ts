@@ -1,5 +1,9 @@
-import type { InferSchemaType, HydratedDocument } from "mongoose";
-import { Schema, model } from "mongoose";
+import {
+  Schema,
+  model,
+  type HydratedDocument,
+  type InferSchemaType,
+} from "mongoose";
 
 const groupSchema = new Schema(
   {

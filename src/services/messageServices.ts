@@ -124,7 +124,6 @@ export const messageServices = {
       {
         $match: {
           users: { $all: [senderObjectId, recipientObjectId] },
-          type: "direct", // Ensure that the conversation is of type "direct"
         },
       },
       { $limit: 1 },

@@ -1,3 +1,4 @@
+import type { InferSchemaType, HydratedDocument } from "mongoose";
 import { Schema, model } from "mongoose";
 
 const participantSchema = new Schema(
@@ -27,3 +28,7 @@ participantSchema.index({ conversationId: 1, userId: 1 }, { unique: true });
 participantSchema.index({ userId: 1 });
 
 export const Participant = model("Participant", participantSchema);
+
+export type ParticipantDocument = HydratedDocument<
+  InferSchemaType<typeof participantSchema>
+>;

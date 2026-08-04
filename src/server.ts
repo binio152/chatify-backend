@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
 import friendRoutes from "./routes/friendRoutes.ts";
 import messageRouter from "./routes/messageRoutes.ts";
+import conversationRouter from "./routes/conversationRoutes.ts";
 import { authenticationToken } from "./middlewares/auth.ts";
 
 const app = express();
@@ -35,6 +36,7 @@ app.use(authenticationToken);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/messages", messageRouter);
+app.use("/api/conversations", conversationRouter);
 
 // Error handling middlewares
 app.use(notFoundHandler);
