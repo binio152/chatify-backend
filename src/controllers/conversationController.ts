@@ -99,6 +99,37 @@ export const getAllConversations = async (
       { $match: { userId: new Types.ObjectId(userId) } },
       {
         $lookup: {
+          from: "participants",
+          let: { conversationId: "$conversationId" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$conversationId", "$$conversationId"] },
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "userData",
+              },
+            },
+            { $unwind: "$userData" },
+            {
+              $project: {
+                _id: 0,
+                avatarUrl: "$userData.avatarUrl",
+                lastReadMessageId: 1,
+              },
+            },
+          ],
+
+          as: "lastReadBy",
+        },
+      },
+      {
+        $lookup: {
           from: "conversations",
           localField: "conversationId",
           foreignField: "_id",
@@ -152,6 +183,7 @@ export const getAllConversations = async (
           lastMessage: "$conversationData.lastMessage",
           lastMessageAt: "$conversationData.lastMessageAt",
           lastMessageSender: "$lastMessageSender",
+          lastReadBy: 1,
           createdAt: "$conversationData.createdAt",
           updatedAt: "$conversationData.updatedAt",
         },
