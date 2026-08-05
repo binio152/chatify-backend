@@ -21,4 +21,24 @@ export const createConversationSchema = z.object({
     .min(1, "At least one member is required"),
 });
 
+export const getConversationQuerySchema = z.object({
+  limit: z.coerce
+    .number()
+    .min(10, "Limit must be at least 10")
+    .max(100, "Limit must be at most 100")
+    .default(50)
+    .optional(),
+  cursor: z.coerce.date().optional(),
+});
+
+export const getConversationParamSchema = z.object({
+  conversationId: z.string().min(1, "Conversation ID is required"),
+});
+
 export type CreateConversationType = z.infer<typeof createConversationSchema>;
+export type GetConversationQueryType = z.infer<
+  typeof getConversationQuerySchema
+>;
+export type GetConversationParamType = z.infer<
+  typeof getConversationParamSchema
+>;

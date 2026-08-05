@@ -9,6 +9,7 @@ const groupSchema = new Schema(
   {
     name: { type: String, trim: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
+    avatarUrl: { type: String },
   },
   { _id: false },
 );
@@ -16,7 +17,9 @@ const groupSchema = new Schema(
 const lastMessageSchema = new Schema(
   {
     _id: { type: Schema.Types.ObjectId, ref: "Message" },
-    content: { type: String, default: null },
+    type: { type: String, enum: ["text", "image"], required: true },
+    content: { type: String },
+    imageUrl: { type: String },
     senderId: { type: Schema.Types.ObjectId, ref: "User" },
     createdAt: { type: Date, default: null },
   },
@@ -34,7 +37,7 @@ const conversationSchema = new Schema(
     group: { type: groupSchema },
     lastMessage: { type: lastMessageSchema, default: null },
     lastMessageAt: { type: Date, default: null },
-    preview: { type: String, default: null },
+    messagePreview: { type: String, default: null },
   },
   { timestamps: true },
 );

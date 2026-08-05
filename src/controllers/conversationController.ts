@@ -2,21 +2,17 @@ import type { Request, Response, NextFunction } from "express";
 import type { ParamsDictionary } from "express-serve-static-core";
 import {
   ConversationType,
-  UserRole,
   type CreateConversationType,
+  type GetConversationParamType,
+  type GetConversationQueryType,
 } from "../schemas/conversation.ts";
 import { messageServices } from "../services/messageServices.ts";
 import { conversationServices } from "../services/conversationServices.ts";
 import { AppError } from "../utils/AppError.ts";
-import {
-  Participant,
-  type ParticipantDocument,
-} from "../models/Participant.ts";
-import {
-  Conversation,
-  type ConversationDocument,
-} from "../models/Conversation.ts";
-import mongoose from "mongoose";
+import { Participant } from "../models/Participant.ts";
+import { type ConversationDocument } from "../models/Conversation.ts";
+import mongoose, { Types } from "mongoose";
+import { Message } from "../models/Message.ts";
 
 export const createConversation = async (
   req: Request<ParamsDictionary, any, CreateConversationType>,
@@ -28,6 +24,8 @@ export const createConversation = async (
   try {
     const { type, name, memberIds } = req.body;
     const userId = req.user!.userId;
+    const groupAvatar = req.file;
+
     console.log(userId);
 
     let conversation: ConversationDocument | null = null;
@@ -68,6 +66,7 @@ export const createConversation = async (
           name as string,
           userId,
           memberIds,
+          groupAvatar,
         );
         conversation = result.conversation;
       });
@@ -88,3 +87,120 @@ export const createConversation = async (
   }
 };
 
+export const getAllConversations = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = req.user!.userId;
+
+    const conversations = await Participant.aggregate([
+      { $match: { userId: new Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "conversationId",
+          foreignField: "_id",
+          as: "conversationData",
+        },
+      },
+      { $unwind: "$conversationData" },
+      {
+        $lookup: {
+          from: "messages",
+          let: { lastMessageId: "$conversationData.lastMessage._id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$lastMessageId"] } } },
+            {
+              $project: {
+                _id: 0,
+                type: 1,
+                content: 1,
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            },
+          ],
+          as: "lastMessage",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { senderId: "$conversationData.lastMessage.senderId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$senderId"] } } },
+            {
+              $project: {
+                username: 1,
+                firstName: 1,
+                lastName: 1,
+                avatarUrl: 1,
+              },
+            },
+          ],
+          as: "lastMessageSender",
+        },
+      },
+      { $unwind: "$lastMessageSender" },
+      {
+        $project: {
+          type: "$conversationData.type",
+          role: 1,
+          unreadCount: 1,
+          lastMessage: "$conversationData.lastMessage",
+          lastMessageAt: "$conversationData.lastMessageAt",
+          lastMessageSender: "$lastMessageSender",
+          createdAt: "$conversationData.createdAt",
+          updatedAt: "$conversationData.updatedAt",
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Conversations fetched successfully.",
+      conversations,
+    });
+  } catch (err) {
+    console.log("Error occurred while fetching all conversations", err);
+    next(err);
+  }
+};
+
+export const getConversationById = async (
+  req: Request<GetConversationParamType, any, any, GetConversationQueryType>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { limit, cursor } = req.query;
+    const { conversationId } = req.params;
+
+    const query = {
+      conversationId,
+      ...(cursor && { createdAt: { $lt: new Date(cursor) } }),
+    };
+
+    const messages = await Message.find(query).sort({ createdAt: -1 }).lean();
+
+    let nextCursor = null;
+    if (messages.length > Number(limit)) {
+      const nextMessage = messages[messages.length - 1];
+      nextCursor = nextMessage?.createdAt.toString() ?? null;
+      messages.pop();
+    }
+
+    messages.reverse();
+    res.json({
+      success: true,
+      message: "Messages fetched successfully.",
+      messages,
+      nextCursor,
+    });
+  } catch (err) {
+    console.log("Error occurred while fetching conversation by ID", err);
+    next(err);
+  }
+};

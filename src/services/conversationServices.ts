@@ -1,10 +1,8 @@
 import mongoose, { Types } from "mongoose";
 import { Conversation } from "../models/Conversation.ts";
-import {
-  Participant,
-  type ParticipantDocument,
-} from "../models/Participant.ts";
+import { Participant } from "../models/Participant.ts";
 import { UserRole } from "../schemas/conversation.ts";
+import type { Multer } from "multer";
 
 export const conversationServices = {
   createDirectConversation: async (
@@ -39,10 +37,20 @@ export const conversationServices = {
     name: string,
     ownerId: string,
     memberIds: string[],
+    groupAvatar?: Express.Multer.File,
   ) => {
+    let avatarUrl = `https://api.dicebear.com/10.x/landscape/svg?seed=${name}`;
+
+    if (groupAvatar) {
+    }
+
     const conversation = new Conversation({
       type: "group",
-      group: { name, createdBy: ownerId },
+      group: {
+        name,
+        createdBy: ownerId,
+        avatarUrl,
+      },
     });
 
     await conversation.save({ session });
