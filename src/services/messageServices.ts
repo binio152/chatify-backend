@@ -21,18 +21,23 @@ export const messageServices = {
   uploadMessageAttachment: async (file?: Express.Multer.File) => {
     if (!file) return undefined;
 
-    const uploaded = await cloudinaryServices.sendMessageImage(file.buffer);
+    const uploaded = await cloudinaryServices.sendDirectImageMessage(
+      file.buffer,
+    );
+    console.log(uploaded);
     return (uploaded as UploadApiResponse).url;
   },
 
   buildMessagePreview: async ({
+    type,
     content,
     senderId,
   }: {
+    type: string;
     content?: string;
     senderId: string;
   }) => {
-    if (content) {
+    if (content && type !== "image") {
       return content.length > 36 ? `${content.slice(0, 36)}...` : content;
     }
 
@@ -46,31 +51,39 @@ export const messageServices = {
     content,
     file,
   }: PrepareOutgoingMessageInput) => {
+    console.log(file);
     const imageUrl = await messageServices.uploadMessageAttachment(file);
+    console.log(imageUrl);
+
+    const type = imageUrl ? "image" : "text";
+    console.log(type);
 
     const message = await Message.create({
       conversationId,
       senderId,
+      type,
       ...(content && { content }),
       ...(imageUrl && { imageUrl }),
     });
 
-    const preview = await messageServices.buildMessagePreview({
+    const messagePreview = await messageServices.buildMessagePreview({
+      type,
       ...(content && { content }),
       senderId,
     });
 
-    return { message, preview };
+    return { message, messagePreview };
   },
 
   updateConversationAfterSendMessage: async (
     conversation: ConversationDocument,
     message: MessageDocument,
     senderId: string,
-    preview: string | null,
+    messagePreview: string | null,
   ) => {
     const lastMessage = {
       _id: message._id,
+      type: message.type,
       senderId: message.senderId,
       content: message.content ?? null,
       createdAt: message.createdAt,
@@ -79,7 +92,7 @@ export const messageServices = {
     conversation.set({
       lastMessage,
       lastMessageAt: message.createdAt,
-      preview,
+      messagePreview,
     });
 
     await conversation.save();

@@ -42,6 +42,7 @@ export const signup = async (
       email,
       firstName,
       lastName,
+      avatarUrl: `https://api.dicebear.com/10.x/initial-face/svg?seed=${lastName}`,
     });
 
     return res

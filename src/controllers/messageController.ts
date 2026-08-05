@@ -29,18 +29,19 @@ export const sendDirectMessage = async (
       ]);
     }
 
-    const { message, preview } = await messageServices.createOutgoingMessage({
-      conversationId: directConversation._id,
-      senderId,
-      ...(content && { content }),
-      ...(image && { image }),
-    });
+    const { message, messagePreview } =
+      await messageServices.createOutgoingMessage({
+        conversationId: directConversation._id,
+        senderId,
+        ...(content && { content }),
+        ...(image && { file: image }),
+      });
 
     await messageServices.updateConversationAfterSendMessage(
       directConversation,
       message,
       senderId,
-      preview,
+      messagePreview,
     );
 
     return res.status(201).json({
@@ -65,18 +66,18 @@ export const sendGroupMessage = async (
     const content = req.body.content;
     const image = req.file;
 
-    const { message, preview } = await messageServices.createOutgoingMessage({
+    const { message, messagePreview } = await messageServices.createOutgoingMessage({
       conversationId: groupConversation._id,
       senderId,
       ...(content && { content }),
-      ...(image && { image }),
+      ...(image && { file: image }),
     });
 
     await messageServices.updateConversationAfterSendMessage(
       groupConversation,
       message,
       senderId,
-      preview,
+      messagePreview,
     );
 
     return res.status(201).json({
