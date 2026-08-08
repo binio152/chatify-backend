@@ -118,9 +118,11 @@ export const getAllConversations = async (
             { $unwind: "$userData" },
             {
               $project: {
-                _id: 0,
+                _id: "$userData._id",
                 avatarUrl: "$userData.avatarUrl",
                 lastReadMessageId: 1,
+                firstName: "$userData.firstName",
+                lastName: "$userData.lastName",
               },
             },
           ],
@@ -164,7 +166,6 @@ export const getAllConversations = async (
             { $match: { $expr: { $eq: ["$_id", "$$senderId"] } } },
             {
               $project: {
-                username: 1,
                 firstName: 1,
                 lastName: 1,
                 avatarUrl: 1,
@@ -174,20 +175,54 @@ export const getAllConversations = async (
           as: "lastMessageSender",
         },
       },
-      { $unwind: "$lastMessageSender" },
+      {
+        $unwind: {
+          path: "$lastMessageSender",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { createdBy: "$conversationData.group.createdBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$createdBy"] } } },
+            {
+              $project: {
+                firstName: 1,
+                lastName: 1,
+                avatarUrl: 1,
+              },
+            },
+          ],
+          as: "createdByUser",
+        },
+      },
+      {
+        $unwind: {
+          path: "$createdByUser",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       {
         $project: {
+          _id: "$conversationData._id",
           type: "$conversationData.type",
+          avatarUrl: "$conversationData.group.avatarUrl",
+          name: "$conversationData.group.name",
+          createdByUser: 1,
           role: 1,
           unreadCount: 1,
           lastMessage: "$conversationData.lastMessage",
           lastMessageAt: "$conversationData.lastMessageAt",
-          lastMessageSender: "$lastMessageSender",
+          lastMessageSender: 1,
           lastReadBy: 1,
+          messagePreview: "$conversationData.messagePreview",
           createdAt: "$conversationData.createdAt",
           updatedAt: "$conversationData.updatedAt",
         },
       },
+      { $sort: { updatedAt: -1 } },
     ]);
 
     return res.status(200).json({
@@ -215,12 +250,15 @@ export const getConversationById = async (
       ...(cursor && { createdAt: { $lt: new Date(cursor) } }),
     };
 
-    const messages = await Message.find(query).sort({ createdAt: -1 }).lean();
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) + 1)
+      .lean();
 
     let nextCursor = null;
     if (messages.length > Number(limit)) {
       const nextMessage = messages[messages.length - 1];
-      nextCursor = nextMessage?.createdAt.toString() ?? null;
+      nextCursor = nextMessage?.createdAt.toISOString() ?? null;
       messages.pop();
     }
 
@@ -234,5 +272,23 @@ export const getConversationById = async (
   } catch (err) {
     console.log("Error occurred while fetching conversation by ID", err);
     next(err);
+  }
+};
+
+export const getConversationsForSocketIO = async (userId: string) => {
+  try {
+    const conversationIds = await Participant.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      // { $project: { _id: 0, conversationId: 1 } },
+    ]);
+
+    return conversationIds;
+  } catch (err) {
+    console.log("Error occurred while getting conversation for socket.io", err);
+    return [];
   }
 };

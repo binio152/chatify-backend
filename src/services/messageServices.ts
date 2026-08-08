@@ -8,7 +8,7 @@ import { cloudinaryServices } from "./cloudinaryServices.ts";
 import type { MessageDocument } from "../models/Message.ts";
 import { Participant } from "../models/Participant.ts";
 import type { UploadApiResponse } from "cloudinary";
-import { Types } from "mongoose";
+import { buildDirectConversationKey } from "../utils/directConversation.ts";
 
 export type PrepareOutgoingMessageInput = {
   conversationId: ConversationDocument["_id"];
@@ -51,9 +51,7 @@ export const messageServices = {
     content,
     file,
   }: PrepareOutgoingMessageInput) => {
-    console.log(file);
     const imageUrl = await messageServices.uploadMessageAttachment(file);
-    console.log(imageUrl);
 
     const type = imageUrl ? "image" : "text";
     console.log(type);
@@ -119,34 +117,11 @@ export const messageServices = {
   },
 
   findDirectConversation: async (senderId: string, recipientId: string) => {
-    const senderObjectId = new Types.ObjectId(senderId);
-    const recipientObjectId = new Types.ObjectId(recipientId);
-
-    const [directConversation] = await Participant.aggregate([
-      {
-        $match: {
-          userId: { $in: [senderObjectId, recipientObjectId] },
-        },
-      },
-      {
-        $group: {
-          _id: "$conversationId",
-          users: { $addToSet: "$userId" },
-        },
-      },
-      {
-        $match: {
-          users: { $all: [senderObjectId, recipientObjectId] },
-        },
-      },
-      { $limit: 1 },
-    ]);
-
-    if (!directConversation) return null;
+    const directKey = buildDirectConversationKey(senderId, recipientId);
 
     return Conversation.findOne({
-      _id: directConversation._id,
       type: "direct",
+      directKey,
     });
   },
 };

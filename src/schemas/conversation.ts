@@ -24,11 +24,11 @@ export const createConversationSchema = z.object({
 export const getConversationQuerySchema = z.object({
   limit: z.coerce
     .number()
-    .min(10, "Limit must be at least 10")
+    .min(1, "Limit must be at least 10")
     .max(100, "Limit must be at most 100")
     .default(50)
     .optional(),
-  cursor: z.coerce.date().optional(),
+  cursor: z.string().datetime().optional(),
 });
 
 export const getConversationParamSchema = z.object({

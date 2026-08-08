@@ -34,6 +34,7 @@ const conversationSchema = new Schema(
       required: true,
       default: "direct",
     },
+    directKey: { type: String, sparse: true, unique: true },
     group: { type: groupSchema },
     lastMessage: { type: lastMessageSchema, default: null },
     lastMessageAt: { type: Date, default: null },

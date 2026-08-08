@@ -25,6 +25,10 @@ const messageSchema = new Schema(
     imageUrl: {
       type: String,
     },
+    readBy: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
   },
   { timestamps: true },
 );

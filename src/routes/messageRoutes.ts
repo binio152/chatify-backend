@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { validateRequest } from "../middlewares/validateRequest.ts";
 import {
+  markConversationReadSchema,
   sendDirectMessageSchema,
   sendGroupMessageSchema,
 } from "../schemas/message.ts";
 import {
+  markConversationAsRead,
   sendDirectMessage,
   sendGroupMessage,
 } from "../controllers/messageController.ts";
@@ -16,6 +18,12 @@ import {
 } from "../middlewares/message.ts";
 
 const router = Router();
+
+router.post(
+  "/read",
+  validateRequest({ type: "body", schema: markConversationReadSchema }),
+  markConversationAsRead,
+);
 
 router.post(
   "/direct",

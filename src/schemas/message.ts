@@ -11,5 +11,10 @@ export const sendGroupMessageSchema = z.object({
   content: z.string().min(1).optional(),
 });
 
+export const markConversationReadSchema = z.object({
+  conversationId: z.string().min(1, "Conversation ID is required"),
+});
+
 export type SendDirectMessageType = z.infer<typeof sendDirectMessageSchema>;
 export type SendGroupMessageType = z.infer<typeof sendGroupMessageSchema>;
+export type MarkConversationReadType = z.infer<typeof markConversationReadSchema>;

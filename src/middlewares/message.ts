@@ -52,6 +52,8 @@ export const requireMessageContentOrImage = async (
 
     const hasImage = Boolean(req.file);
 
+    console.log("hasContent:", hasContent);
+    console.log("hasImage:", hasImage);
     if (!hasContent && !hasImage)
       return next(
         new AppError("Message must contain either text or an image.", 400),
