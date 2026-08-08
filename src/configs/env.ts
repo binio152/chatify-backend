@@ -90,6 +90,7 @@ let env: Env;
 
 try {
   env = envSchema.parse(process.env);
+  console.log(env)
 } catch (err) {
   if (err instanceof z.ZodError) {
     console.log("Invalid env variables");

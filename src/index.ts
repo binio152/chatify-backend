@@ -1,7 +1,7 @@
 import { connectDB } from "./configs/db.ts";
 import { cloudinaryConfig } from "./configs/cloudinary.ts";
 import env from "./configs/env.ts";
-import app from "./server.ts";
+import { server } from "./server.ts";
 
 async function bootstrap() {
   try {
@@ -9,7 +9,7 @@ async function bootstrap() {
 
     cloudinaryConfig();
 
-    app.listen(env.PORT, () => {
+    server.listen(env.PORT, () => {
       console.log(`Server is running on http://localhost:${env.PORT}`);
     });
   } catch (err) {

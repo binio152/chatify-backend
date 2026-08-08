@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { Friend } from "../models/Friend.ts";
 import { FriendRequest } from "../models/FriendRequest.ts";
+import { messageServices } from "./messageServices.ts";
+import { conversationServices } from "./conversationServices.ts";
 
 export const friendServices = {
   acceptFriendRequestAndCreateFriendship: async (
@@ -22,6 +24,22 @@ export const friendServices = {
         { _id: reverseRequestId },
         { session },
       );
+
+      // Ensure a direct conversation exists between the two users. If not, create one
+      // and set a friendly preview message.
+      const existingConversation = await messageServices.findDirectConversation(
+        from,
+        to,
+      );
+
+      if (!existingConversation) {
+        await conversationServices.createDirectConversation(
+          session,
+          from,
+          to,
+          "Chat ngay để lan tỏa Hepi!",
+        );
+      }
 
       await session.commitTransaction();
       return [friend, friendRequest];

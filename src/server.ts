@@ -12,11 +12,25 @@ import friendRoutes from "./routes/friendRoutes.ts";
 import messageRouter from "./routes/messageRoutes.ts";
 import conversationRouter from "./routes/conversationRoutes.ts";
 import { authenticationToken } from "./middlewares/auth.ts";
+import { app, server } from "./socket/index.ts";
 
-const app = express();
+const allowedOrigins = env.CORS_ORIGIN;
 
 app.use(helmet());
-app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
+    credentials: true,
+  }),
+);
 app.use(morgan("dev", { skip: () => isTest() })); // skip logging while testing
 app.use(express.json());
 app.use(cookieParser());
@@ -42,5 +56,5 @@ app.use("/api/conversations", conversationRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-export { app };
+export { app, server };
 export default app;
